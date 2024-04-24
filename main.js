@@ -226,12 +226,29 @@ function onDataLoaded(data, processedData) {
 
         // Add a cube
         const instrumentGeometry = new THREE.BoxGeometry(1.5, 1, 3);
-        const instrumentMaterial = new THREE.MeshStandardMaterial({color: 0x00ff00});
+        const instrumentMaterial = new THREE.MeshStandardMaterial({color: 0xffffff});
         const cube = new THREE.Mesh(instrumentGeometry, instrumentMaterial);
-        cube.scale.multiplyScalar(100 * unitsPerMeter);
+        cube.scale.multiplyScalar(50 * unitsPerMeter);
         cube.position.copy(instrumentPos);
         cube.lookAt(summitPos);
         scene.add(cube);
+
+        const height = 1;
+        const radius = height / Math.tan(scanInfo.coneangle / 180 * Math.PI)
+        const coneGeometry = new THREE.ConeGeometry(radius, height, 32);
+        coneGeometry.translate(0, -height/2, 0)
+        coneGeometry.rotateX(-Math.PI/2);
+        const coneEdges = new THREE.EdgesGeometry(coneGeometry);
+        const line = new THREE.LineSegments(coneEdges, new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            opacity: 0.5,
+            transparent: true
+        }));
+
+        line.scale.multiplyScalar(instrumentPos.distanceTo(summitPos));
+        line.position.copy(instrumentPos);
+        line.lookAt(summitPos);
+        scene.add(line);
     }
 
     let positions = [];
