@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Volcanic clouds</title>
+
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="shortcut icon" href="favicon.svg" type="image/svg">
+
+	</head>
+	<body style="margin: 0">
+		<div id="fileUploadContainer" class="container-fluid" style="position: absolute;">
+			<article
+			data-tooltip="Browse and select a scan or traverse data file to load"
+			data-placement="bottom">
+				<h1>Volcanic cloud viewer</h1>
+				<label for="fileInput">Upload data here:
+					<input type="file" id="fileInput" accept=".txt, .csv" multiple/>
+				</label>
+				An evaluation log file in XML format is expected.
+			</article>
+		</div>
+
+		<div id="container"></div>
+
+		<!-- Import maps polyfill -->
+		<!-- Remove this when import maps will be widely supported -->
+		<script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+		<script type="importmap">
+			{
+				"imports": {
+					"three": "./libs/three.module.js"
+				}
+			}
+		</script>
+
+		<script src="libs/mathjs.js"></script>
+		<script type="module" src="main.js"></script>
+	</body>
+</html>
