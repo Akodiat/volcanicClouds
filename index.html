@@ -5,6 +5,19 @@
 
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
 
+		<style>
+			#statusContainer {
+				position: absolute;
+				display: none;
+				bottom: 0;
+				padding: 5px;
+				background: #0000004d;
+			}
+			button {
+				margin: 0px; padding: 0px;
+			}
+		</style>
+
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
 		<link rel="shortcut icon" href="favicon.svg" type="image/svg">
@@ -24,6 +37,14 @@
 
 			</article>
 			<article>When the visualisation has loaded, use keyboard arrows to step between timeframes.</article>
+		</div>
+
+		<div id="statusContainer">
+			<div role="group" style="display: flex;">
+				<button id="prevFrame">&lt;</button>
+				<div id="statusText"></div>
+				<button id="nextFrame">&gt;</button>
+			  </div>
 		</div>
 
 		<div id="container"></div>

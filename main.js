@@ -343,6 +343,8 @@ function onDataLoaded(data, processedData) {
             requestAnimationFrame(()=>{
                 updateFrame(steps-1);
             })
+        } else {
+            setStatus(processedData[currentFrame].time.toLocaleString());
         }
     };
     updateFrame();
@@ -360,7 +362,22 @@ function onDataLoaded(data, processedData) {
         }
     });
 
+    document.getElementById("prevFrame").onclick = () => {
+        currentFrame = Math.max(currentFrame-1, 0);
+        updateFrame();
+    }
+    document.getElementById("nextFrame").onclick = () => {
+        currentFrame = Math.min(currentFrame+1, frames.length-1);
+        updateFrame();
+    }
 
+}
+
+function setStatus(s) {
+    const container = document.getElementById("statusContainer");
+    const text = document.getElementById("statusText");
+    container.style.display = "block";
+    text.textContent = s;
 }
 
 function generateTexture(data, height, width) {
