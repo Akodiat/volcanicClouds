@@ -332,9 +332,13 @@ function onDataLoaded(data, processedData) {
         t++;
     }
     currentFrame = 0;
-    const velocity = 0.000001;
+    // Velocity in m/s
+    const velocityMetersPerSecond = 10;
+    // Velocity in units per millisecond
+    const velocity = (velocityMetersPerSecond * unitsPerMeter) / 1000;
     const updateFrame = (steps=20) => {
         frames.forEach((f,i) => {
+            // Time difference in milliseconds
             const dt = processedData[currentFrame].time - processedData[i].time;
             const newPos = dir.clone().multiplyScalar(dt * velocity);
             f.position.lerp(newPos, Math.sqrt(1/steps));
