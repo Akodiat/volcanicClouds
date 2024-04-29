@@ -235,20 +235,21 @@ function onDataLoaded(data, processedData) {
         scene.add(cube);
 
         const height = 1;
-        const radius = height / Math.tan(scanInfo.coneangle / 180 * Math.PI);
-        const coneGeometry = new THREE.ConeGeometry(radius, height, 32);
+        const radius = height * Math.tan(2 * scanInfo.coneangle / 180 * Math.PI);
+        const nScanValues = instrumentData[0].spectralData.length;
+        const coneGeometry = new THREE.ConeGeometry(radius, height, nScanValues-1, 1, true, 1.5*Math.PI, -Math.PI);
         coneGeometry.translate(0, -height/2, 0);
         coneGeometry.rotateX(-Math.PI/2);
         const coneEdges = new THREE.EdgesGeometry(coneGeometry);
         const line = new THREE.LineSegments(coneEdges, new THREE.LineBasicMaterial({
             color: 0xffffff,
-            opacity: 0.5,
+            opacity: 0.3,
             transparent: true
         }));
 
         line.scale.multiplyScalar(instrumentPos.distanceTo(summitPos));
         line.position.copy(instrumentPos);
-        line.lookAt(summitPos);
+        line.lookAt(new THREE.Vector3(0, instrumentPos.y, 0));
         scene.add(line);
     }
 
