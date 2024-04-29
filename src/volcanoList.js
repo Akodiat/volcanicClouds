@@ -52,7 +52,7 @@ const volcanoList = [
     ["rincon_de_la_vieja", 10.83, -85.3239, 1895]
 ].map(l=>{
     const [volcano, lat, lon, alt] = l;
-    return {volcano, lat, lon, alt}
+    return {volcano, lat, lon, alt};
 })
 
-export {volcanoList}
+export {volcanoList};

@@ -26,4 +26,4 @@ function locateVolcano(data) {
     return [nameVol, latVol, lonVol, altVol];
 }
 
-export {locateVolcano}
+export {locateVolcano};

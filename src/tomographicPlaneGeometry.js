@@ -6,7 +6,7 @@ class TomographicPlaneGeometry extends THREE.BufferGeometry {
     constructor(positions, dir, gridX, gridY) {
 
         super();
-        this.type = 'TomographicPlaneGeometry';
+        this.type = "TomographicPlaneGeometry";
 
         const gridX1 = gridX + 1;
         const gridY1 = gridY + 1;
@@ -50,9 +50,9 @@ class TomographicPlaneGeometry extends THREE.BufferGeometry {
         }
 
         this.setIndex(indices);
-        this.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-        this.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-        this.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        this.setAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+        this.setAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+        this.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     }
 }
 

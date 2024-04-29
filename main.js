@@ -61,6 +61,7 @@ function init() {
                 const frame = {points: []};
 
                 // Parse datetime
+                // eslint-disable-next-line no-unused-vars
                 const [_0, _1, day1, time1, _2, day2, time2] = filename.split("_");
                 const date1 = parseDate(day1, time1);
                 const date2 = parseDate(day2, time2);
@@ -97,11 +98,11 @@ function init() {
 
     window.addEventListener("keydown", (event) => {
         switch (event.code) {
-            case "Enter":
-                if (fileInput.files.length > 0) {
-                    loadFromFiles();
-                }
-                break;
+        case "Enter":
+            if (fileInput.files.length > 0) {
+                loadFromFiles();
+            }
+            break;
         }
     });
 
@@ -166,9 +167,9 @@ function onDataLoaded(data, processedData) {
     const summitLatLng = new THREE.Vector2(latVol, lonVol);
     const radius = 6.0;
 
-    const loader = new GLTFLoader().setPath('resources/terrainMeshes/');
+    const loader = new GLTFLoader().setPath("resources/terrainMeshes/");
 
-    const filename = `${nameVol}.glb`
+    const filename = `${nameVol}.glb`;
     loader.load(filename, gltf => {
         const model = gltf.scene;
         scene.add(model);
@@ -194,7 +195,7 @@ function onDataLoaded(data, processedData) {
                 function (result) {
                     saveArrayBuffer(result, filename);
                 },
-                error => console.log('An error happened during parsing', error),
+                error => console.log("An error happened during parsing", error),
                 {binary: true}
             );
         });
@@ -234,9 +235,9 @@ function onDataLoaded(data, processedData) {
         scene.add(cube);
 
         const height = 1;
-        const radius = height / Math.tan(scanInfo.coneangle / 180 * Math.PI)
+        const radius = height / Math.tan(scanInfo.coneangle / 180 * Math.PI);
         const coneGeometry = new THREE.ConeGeometry(radius, height, 32);
-        coneGeometry.translate(0, -height/2, 0)
+        coneGeometry.translate(0, -height/2, 0);
         coneGeometry.rotateX(-Math.PI/2);
         const coneEdges = new THREE.EdgesGeometry(coneGeometry);
         const line = new THREE.LineSegments(coneEdges, new THREE.LineBasicMaterial({
@@ -256,14 +257,14 @@ function onDataLoaded(data, processedData) {
         const deg2utm = (lat, long) => {
             const [x,y] = proj([lat, long]);
             return [x/unitsPerMeter, y/unitsPerMeter];
-        }
+        };
         processedData = tomoInverse(data, deg2utm);
         for (const frame of processedData) {
             positions.push(frame.points.map(d=>new THREE.Vector3(
-                    d.latPutm * unitsPerMeter,
-                    d.altP * unitsPerMeter,
-                    d.lonPutm * unitsPerMeter,
-                    proj
+                d.latPutm * unitsPerMeter,
+                d.altP * unitsPerMeter,
+                d.lonPutm * unitsPerMeter,
+                proj
             )));
         }
 
@@ -342,7 +343,7 @@ function onDataLoaded(data, processedData) {
         if (steps > 1) {
             requestAnimationFrame(()=>{
                 updateFrame(steps-1);
-            })
+            });
         } else {
             setStatus(processedData[currentFrame].time.toLocaleString());
         }
@@ -351,25 +352,25 @@ function onDataLoaded(data, processedData) {
 
     window.addEventListener("keydown", (event) => {
         switch (event.code) {
-            case "ArrowRight":
-                currentFrame = Math.min(currentFrame+1, frames.length-1);
-                updateFrame();
-                break;
-            case "ArrowLeft":
-                currentFrame = Math.max(currentFrame-1, 0);
-                updateFrame();
-                break;
+        case "ArrowRight":
+            currentFrame = Math.min(currentFrame+1, frames.length-1);
+            updateFrame();
+            break;
+        case "ArrowLeft":
+            currentFrame = Math.max(currentFrame-1, 0);
+            updateFrame();
+            break;
         }
     });
 
     document.getElementById("prevFrame").onclick = () => {
         currentFrame = Math.max(currentFrame-1, 0);
         updateFrame();
-    }
+    };
     document.getElementById("nextFrame").onclick = () => {
         currentFrame = Math.min(currentFrame+1, frames.length-1);
         updateFrame();
-    }
+    };
 
 }
 
@@ -410,8 +411,8 @@ function generateTexture(data, height, width) {
 }
 
 function save(blob, filename) {
-    const link = document.createElement( 'a' );
-    link.style.display = 'none';
+    const link = document.createElement("a");
+    link.style.display = "none";
     document.body.appendChild(link);
 
     link.href = URL.createObjectURL(blob);
@@ -421,7 +422,7 @@ function save(blob, filename) {
 
 function saveArrayBuffer(buffer, filename) {
     save(new Blob([buffer], {
-        type: 'application/octet-stream'
+        type: "application/octet-stream"
     }), filename);
 }
 
