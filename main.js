@@ -8,8 +8,11 @@ import {drawParticles} from "./libs/draw.js";
 import {TomographicPlaneGeometry} from "./src/tomographicPlaneGeometry.js";
 import {GLTFLoader} from "./libs/threeAddons/GLTFLoader.js";
 import {GLTFExporter} from "./libs/threeAddons/GLTFExporter.js";
+import {makePlumeMesh} from "./src/makePlumeMesh.js";
+import {GUI} from "./libs/threeAddons/lil-gui.module.min.js"
 
 let camera, scene, renderer, controls;
+let plumeMesh = new THREE.Object3D();
 let frames = [];
 let currentFrame;
 init();
@@ -253,7 +256,6 @@ function onDataLoaded(data, processedData) {
         scene.add(line);
     }
 
-    let positions = [];
     if (processedData.length === 0) {
         const deg2utm = (lat, long) => {
             const [x,y] = proj([lat, long]);
@@ -261,21 +263,21 @@ function onDataLoaded(data, processedData) {
         };
         processedData = tomoInverse(data, deg2utm);
         for (const frame of processedData) {
-            positions.push(frame.points.map(d=>new THREE.Vector3(
+            frame.coordinates = frame.points.map(d=>new THREE.Vector3(
                 d.latPutm * unitsPerMeter,
                 d.altP * unitsPerMeter,
                 d.lonPutm * unitsPerMeter,
                 proj
-            )));
+            ));
         }
 
     } else {
         for (const frame of processedData) {
-            positions.push(frame.points.map(d=>toSceneCoords(
+            frame.coordinates = frame.points.map(d=>toSceneCoords(
                 new THREE.Vector2(
                     d.latPutm, d.lonPutm
                 ), d.altP, proj
-            )));
+            ));
         }
     }
     let dir;
@@ -289,11 +291,11 @@ function onDataLoaded(data, processedData) {
             const color = lut.getColor(c);
             return color;
         });
-        const ps = positions[t];
+        const ps = frame.coordinates;
 
         // Particles
 
-        const particles = drawParticles(ps, colors, 0.005);
+        const pointMesh = drawParticles(ps, colors, 0.005);
 
         // Tomographic plane
 
@@ -322,21 +324,28 @@ function onDataLoaded(data, processedData) {
         }
 
         const planeGeometry = new TomographicPlaneGeometry(ps, dir, frame.size1-1, frame.size2-1);
-        const plane = new THREE.Mesh(planeGeometry, material);
+        const planeMesh = new THREE.Mesh(planeGeometry, material);
 
         const frameGroup = new THREE.Group();
-        frameGroup.add(particles);
-        frameGroup.add(plane);
+        frameGroup.add(pointMesh);
+        frameGroup.add(planeMesh);
         frames.push(frameGroup);
         scene.add(frameGroup);
         t++;
     }
     currentFrame = 0;
-    // Velocity in m/s
-    const velocityMetersPerSecond = 10;
+
+    let params	= {
+        assumedVelocity: 10, // Velocity in m/s
+        maxTimeDiff: 30, // Max time since current frame to include in geometry
+        concentrationThreshold: 0.0005,
+        plumeVisible: true,
+        pointsVisible: true,
+        planeVisible: true,
+    };
     // Velocity in units per millisecond
-    const velocity = (velocityMetersPerSecond * unitsPerMeter) / 1000;
     const updateFrame = (steps=20) => {
+        const velocity = (params.assumedVelocity * unitsPerMeter) / 1000;
         frames.forEach((f,i) => {
             // Time difference in milliseconds
             const dt = processedData[currentFrame].time - processedData[i].time;
@@ -344,16 +353,40 @@ function onDataLoaded(data, processedData) {
             f.position.lerp(newPos, Math.sqrt(1/steps));
             f.visible = currentFrame >= i;
         });
-        render();
         if (steps > 1) {
             requestAnimationFrame(()=>{
+                scene.remove(plumeMesh);
+                render();
                 updateFrame(steps-1);
             });
         } else {
             setStatus(processedData[currentFrame].time.toLocaleString());
+            scene.remove(plumeMesh);
+            if (params.plumeVisible) {
+                plumeMesh = makePlumeMesh(
+                    processedData, summitPos, velocity, dir, currentFrame,
+                    params.concentrationThreshold, params.maxTimeDiff
+                );
+                scene.add(plumeMesh);
+            }
+            frames.forEach(f => {
+                const [pointMesh, planeMesh] = f.children;
+                pointMesh.visible = params.pointsVisible;
+                planeMesh.visible = params.planeVisible;
+            });
         }
+        render();
     };
     updateFrame();
+
+    const gui = new GUI();
+    gui.add(params, 'pointsVisible').onChange(()=>updateFrame());
+    gui.add(params, 'planeVisible').onChange(()=>updateFrame());
+    const plumeFolder = gui.addFolder('Plume');
+    plumeFolder.add(params, 'plumeVisible').onChange(()=>updateFrame());
+    plumeFolder.add(params, 'assumedVelocity').onChange(()=>updateFrame());
+    plumeFolder.add(params, 'maxTimeDiff').onChange(()=>updateFrame());
+    plumeFolder.add(params, 'concentrationThreshold').min(0).onChange(()=>updateFrame());
 
     window.addEventListener("keydown", (event) => {
         switch (event.code) {
