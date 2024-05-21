@@ -1,6 +1,6 @@
 # 4D Tomography of volcanic clouds
 ## Try it out
-Go to akodiat.github.io/volcanicClouds/ to load the visualisation.
+Go to [https:/akodiat.github.io/volcanicClouds/](https://akodiat.github.io/volcanicClouds/) to load the visualisation.
 
 Files required are Evaluation logs and csv output from Matlab, which can be found in the `./matlab/tomoInverse/` directories.
 
