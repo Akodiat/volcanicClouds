@@ -11,6 +11,16 @@ import {GLTFExporter} from "./libs/threeAddons/GLTFExporter.js";
 import {makePlumeMesh} from "./src/makePlumeMesh.js";
 import {GUI} from "./libs/threeAddons/lil-gui.module.min.js"
 
+// GUI parameters
+let params	= {
+    assumedVelocity: 10, // Velocity in m/s
+    maxTimeDiff: 30, // Max time since current frame to include in geometry
+    concentrationThreshold: 0.0005,
+    plumeVisible: true,
+    pointsVisible: true,
+    planeVisible: true,
+};
+
 let camera, scene, renderer, controls;
 let plumeMesh = new THREE.Object3D();
 let frames = [];
@@ -18,8 +28,10 @@ let currentFrame;
 init();
 render();
 
+
 // Initialise scene
 function init() {
+
     // Setup renderer
     renderer = new THREE.WebGLRenderer({
         alpha: true
@@ -52,43 +64,17 @@ function init() {
     // Load data when file is uploaded
     const fileInput = document.getElementById("fileInput");
     const loadFromFiles = async () => {
-        const parseDate = (d, t) => new Date(
-            `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${t.slice(0,2)}:${t.slice(2,4)}`
-        );
         const data = [];
         let alreadyProcessedData = [];
         for (const file of fileInput.files) {
             const text = await file.text();
             const [filename, suffix] = file.name.split(".");
             if (suffix === "csv") {
-                const frame = {points: []};
-
-                // Parse datetime
-                // eslint-disable-next-line no-unused-vars
-                const [_0, _1, day1, time1, _2, day2, time2] = filename.split("_");
-                const date1 = parseDate(day1, time1);
-                const date2 = parseDate(day2, time2);
-                // Calc average time
-                frame.time = new Date((
-                    date1.getTime() +
-                    date2.getTime()
-                ) / 2);
-                // Parse points
-                for (let line of text.split("\n")) {
-                    line = line.trim("\r");
-                    if (line === "") {
-                        continue;
-                    }
-                    const values = line.split(",").map(v=>parseFloat(v));
-                    if (values.length == 2) {
-                        [frame.size1, frame.size2] = values;
-                    } else {
-                        const [lonPutm, latPutm, altP, Concentration] = values;
-                        frame.points.push({lonPutm, latPutm, altP, Concentration});
-                    }
-                }
+                // CSV means we have data from matlab
+                const frame = parseProcessedData(text, filename);
                 alreadyProcessedData.push(frame);
             } else {
+                // Otherwise we should have the txt evaluation logs
                 const scans = parseScans(text);
                 data.push(scans);
             }
@@ -99,6 +85,9 @@ function init() {
 
     fileInput.onchange = loadFromFiles;
 
+    // Firefox might cashe the last files selected,
+    // so this is a shorthand to press Enter to
+    // load the directly.
     window.addEventListener("keydown", (event) => {
         switch (event.code) {
         case "Enter":
@@ -115,6 +104,53 @@ function init() {
     render();
 }
 
+/**
+ * Parse data processed by Matlab script
+ * @param {string} text CSV data string
+ * @param {string} filename File name
+ * @returns {{points: any[]}}
+ */
+function parseProcessedData(text, filename) {
+
+    // Parse date from filename format
+    const parseDate = (d, t) => new Date(
+        `${d.slice(0,4)}-${d.slice(4,6)}-${d.slice(6,8)}T${t.slice(0,2)}:${t.slice(2,4)}`
+    );
+    // eslint-disable-next-line no-unused-vars
+    const [_0, _1, day1, time1, _2, day2, time2] = filename.split("_");
+    const date1 = parseDate(day1, time1);
+    const date2 = parseDate(day2, time2);
+
+    const frame = {points: []};
+
+    // Calc average time
+    frame.time = new Date((
+        date1.getTime() +
+        date2.getTime()
+    ) / 2);
+
+    // Parse points
+    for (let line of text.split("\n")) {
+        line = line.trim("\r");
+        if (line === "") {
+            continue;
+        }
+        const values = line.split(",").map(v=>parseFloat(v));
+        if (values.length == 2) {
+            [frame.size1, frame.size2] = values;
+        } else {
+            const [lonPutm, latPutm, altP, Concentration] = values;
+            frame.points.push({lonPutm, latPutm, altP, Concentration});
+        }
+    }
+    return frame;
+}
+
+/**
+ * Parse evaluation logs
+ * @param {string} text Evaluation logs
+ * @returns {{points: any[]}}
+ */
 function parseScans(text) {
     // Match spectral header and data
     const rInfo = /<scaninformation>(?<info>([\s\S])*?)<\/scaninformation>/gm;
@@ -143,7 +179,16 @@ function parseScans(text) {
         // Header names are not consistent across different stations
         // So let's assume that the order is at least the same
         //const header = match.groups.header.split("\t");
-        const header = ["scanangle", "starttime", "stoptime", "name", "specsaturation", "fitsaturation", "counts_ms", "delta", "chisquare", "exposuretime", "numspec", "column_SO2", "columnerror_SO2", "shift_SO2", "shifterror_SO2", "squeeze_SO2", "squeezeerror_SO2", "column_O3", "columnerror_O3", "shift_O3", "shifterror_O3", "squeeze_O3", "squeezeerror_O3", "column_RING", "columnerror_RING", "shift_RING", "shifterror_RING", "squeeze_RING", "squeezeerror_RING", "isgoodpoint", "offset", "flag"];
+        const header = [
+            "scanangle", "starttime", "stoptime", "name", "specsaturation",
+            "fitsaturation", "counts_ms", "delta", "chisquare", "exposuretime",
+            "numspec", "column_SO2", "columnerror_SO2", "shift_SO2",
+            "shifterror_SO2", "squeeze_SO2", "squeezeerror_SO2", "column_O3",
+            "columnerror_O3", "shift_O3", "shifterror_O3", "squeeze_O3",
+            "squeezeerror_O3", "column_RING", "columnerror_RING", "shift_RING",
+            "shifterror_RING", "squeeze_RING", "squeezeerror_RING",
+            "isgoodpoint", "offset", "flag"
+        ];
         const data = match.groups.data.split("\n");
         data.forEach(d=>{
             d = d.trim("\r");
@@ -161,6 +206,11 @@ function parseScans(text) {
     return scans;
 }
 
+/**
+ * Called when data has been loaded from the input files
+ * @param {any[]} data Evaluation log data
+ * @param {any[]} processedData (optional) Already processed concentration data
+ */
 function onDataLoaded(data, processedData) {
     console.log(data);
 
@@ -204,9 +254,8 @@ function onDataLoaded(data, processedData) {
         });
     } );
 
-
+    // Get projection from latitude, longitude to scene coordinates
     const {proj, unitsPerMeter} = tgeo.getProjection(summitLatLng.toArray(), radius);
-
     const toSceneCoords = (latLng, altitude) => {
         const pos2D = new THREE.Vector2(...proj(latLng));
         return new THREE.Vector3(pos2D.x, altitude * unitsPerMeter, -pos2D.y);
@@ -214,10 +263,12 @@ function onDataLoaded(data, processedData) {
 
     const summitPos = toSceneCoords(summitLatLng, altVol, proj);
 
+    // Setup camera controls
     controls.minDistance = unitsPerMeter;
     controls.target.copy(summitPos);
     controls.update();
 
+    // Visualise the instruments
     const instPos = [];
     for (const instrumentData of data) {
         const scanInfo = instrumentData[0].scanInfo; // Use first datapoint
@@ -228,7 +279,7 @@ function onDataLoaded(data, processedData) {
         const instrumentPos = toSceneCoords(instrumentLatLng, scanInfo.alt, proj);
         instPos.push(instrumentPos);
 
-        // Add a cube
+        // Add a cuboid to mark the instrument position
         const instrumentGeometry = new THREE.BoxGeometry(1.5, 1, 3);
         const instrumentMaterial = new THREE.MeshStandardMaterial({color: 0xffffff});
         const cube = new THREE.Mesh(instrumentGeometry, instrumentMaterial);
@@ -237,6 +288,7 @@ function onDataLoaded(data, processedData) {
         cube.lookAt(summitPos);
         scene.add(cube);
 
+        // Add a cone to mark the instrument scanning volume
         const height = 1;
         const radius = height * Math.tan(2 * scanInfo.coneangle / 180 * Math.PI);
         const nScanValues = instrumentData[0].spectralData.length;
@@ -249,13 +301,14 @@ function onDataLoaded(data, processedData) {
             opacity: 0.3,
             transparent: true
         }));
-
         line.scale.multiplyScalar(instrumentPos.distanceTo(summitPos));
         line.position.copy(instrumentPos);
         line.lookAt(new THREE.Vector3(0, instrumentPos.y, 0));
         scene.add(line);
     }
 
+    // If we don't have any preloaded processed data, calculate it
+    // using tomoInverse
     if (processedData.length === 0) {
         const deg2utm = (lat, long) => {
             const [x,y] = proj([lat, long]);
@@ -294,6 +347,7 @@ function onDataLoaded(data, processedData) {
         dir.negate();
     }
 
+    // Draw concentration visualisations for each frame
     let t = 0;
     for (const frame of processedData) {
         const concentrations = frame.points.map(d=>d.Concentration);
@@ -307,11 +361,9 @@ function onDataLoaded(data, processedData) {
         const ps = frame.coordinates;
 
         // Particles
-
         const pointMesh = drawParticles(ps, colors, 0.005);
 
         // Tomographic plane
-
         const texture = new THREE.CanvasTexture(
             generateTexture(concentrations, frame.size1, frame.size2)
         );
@@ -325,7 +377,6 @@ function onDataLoaded(data, processedData) {
             transparent: true
         });
 
-
         const planeGeometry = new TomographicPlaneGeometry(ps, dir, frame.size1-1, frame.size2-1);
         const planeMesh = new THREE.Mesh(planeGeometry, material);
 
@@ -338,14 +389,6 @@ function onDataLoaded(data, processedData) {
     }
     currentFrame = 0;
 
-    let params	= {
-        assumedVelocity: 10, // Velocity in m/s
-        maxTimeDiff: 30, // Max time since current frame to include in geometry
-        concentrationThreshold: 0.0005,
-        plumeVisible: true,
-        pointsVisible: true,
-        planeVisible: true,
-    };
     // Velocity in units per millisecond
     const updateFrame = (steps=20) => {
         const velocity = (params.assumedVelocity * unitsPerMeter) / 1000;
@@ -382,6 +425,7 @@ function onDataLoaded(data, processedData) {
     };
     updateFrame();
 
+    // Setup visualisation parameters
     const gui = new GUI();
     gui.add(params, 'pointsVisible').onChange(()=>updateFrame());
     gui.add(params, 'planeVisible').onChange(()=>updateFrame());
@@ -391,6 +435,7 @@ function onDataLoaded(data, processedData) {
     plumeFolder.add(params, 'maxTimeDiff').onChange(()=>updateFrame());
     plumeFolder.add(params, 'concentrationThreshold').min(0).onChange(()=>updateFrame());
 
+    // Setup keybindings
     window.addEventListener("keydown", (event) => {
         switch (event.code) {
         case "ArrowRight":
@@ -404,6 +449,7 @@ function onDataLoaded(data, processedData) {
         }
     });
 
+    // Setup buttons
     document.getElementById("prevFrame").onclick = () => {
         currentFrame = Math.max(currentFrame-1, 0);
         updateFrame();
@@ -415,6 +461,10 @@ function onDataLoaded(data, processedData) {
 
 }
 
+/**
+ * Update status container content (used to display the date)
+ * @param {string} s Text to display
+ */
 function setStatus(s) {
     const container = document.getElementById("statusContainer");
     const text = document.getElementById("statusText");
@@ -422,7 +472,19 @@ function setStatus(s) {
     text.textContent = s;
 }
 
+/**
+ * Generate texture from concentration data
+ * @param {number[]} data Flattened (height x width) matrix of concentrations
+ * @param {*} height Texture height
+ * @param {*} width  Texture width
+ * @returns {HTMLCanvasElement}
+ */
 function generateTexture(data, height, width) {
+    console.assert(
+        data.length === height * width,
+        `Length of data ${data.length} not agreeing with height ${height} and width ${width}`
+    );
+
     const canvas = document.createElement("canvas");
     canvas.width = width;
     canvas.height = height;
@@ -434,6 +496,7 @@ function generateTexture(data, height, width) {
     const image = context.getImageData(0, 0, canvas.width, canvas.height);
     const imageData = image.data;
 
+    // Load colour scheme and set min and max values
     const lut = new Lut("ylOrRd", 512);
     lut.minV = Math.min(...data);
     lut.maxV = Math.max(...data);
@@ -443,6 +506,7 @@ function generateTexture(data, height, width) {
         imageData[i] = color.r * 255;       // R
         imageData[i + 1] = color.g * 255;   // G
         imageData[i + 2] = color.b * 255;   // B
+        // Also make plane opacity depend on concentration data
         imageData[i + 3] = (data[j]/lut.maxV) * 255 * 0.75;   // A
     }
 
@@ -451,6 +515,11 @@ function generateTexture(data, height, width) {
     return canvas;
 }
 
+/**
+ * Saves a blob as a file
+ * @param {Blob} blob
+ * @param {string} filename
+ */
 function save(blob, filename) {
     const link = document.createElement("a");
     link.style.display = "none";
