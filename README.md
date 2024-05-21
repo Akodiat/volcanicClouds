@@ -13,6 +13,14 @@ https://gist.github.com/willurd/5720255
 
 Once the static server is running, go to http://localhost:8000
 
+## Volcano terrain meshes
+The 3D terrain is created using the [three-geo](https://github.com/w3reality/three-geo) geographic visualisation library. To avoid repeated calls to the Mapbox API, ready-made meshes for the volcanos on the [volcano list](../main/src/volcanoList.js) are provided in the [resources/terrainMeshes](../main/resources/terrainMeshes) directory.
+
+To add a new volcano, first append it to [src/volcanoList.js](../main/src/volcanoList.js).
+If no terrain mesh can be found when loading data for a volcano in the list, the program will prompt you for a [Mapbox GL JS](https://www.mapbox.com/mapbox-gljs) API access token. At the time of writing, you can get a token for free (up to a number of API calls), by registering on the [Mapbox website](https://www.mapbox.com/mapbox-gljs). After providing your token, a `glb` mesh containing the 3D terrain will be downloaded. Save it to the [resources/terrainMeshes](../main/resources/terrainMeshes) directory and you will not have to repeat the process.
+
+To update the terrain mesh for a volcano, remove the corresponding `glb` file from [resources/terrainMeshes](../main/resources/terrainMeshes) and follow the process above to download a new mesh.
+
 ## Collaboration agreement for research projects
 
 Terms of agreement for collaborating with Digital Research Engineers at e-commons
