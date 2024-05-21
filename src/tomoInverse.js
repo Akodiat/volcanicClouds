@@ -1,5 +1,19 @@
 import {locateVolcano} from "./locateVolcano.js";
-import {mldivider} from "./mldivider.js";
+//import {mldivider} from "./mldivider.js";
+import {loadPyodide} from "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.mjs";
+
+
+// Setup pyodide
+const pyodide = await loadPyodide();
+
+// Load numpy
+await pyodide.loadPackage("micropip");
+const micropip = pyodide.pyimport("micropip");
+await micropip.install("numpy");
+//await micropip.install("scipy");
+
+// Hide progress bar
+document.getElementById("progress").style.display = "none";
 
 /**
  * Tomographic inversion. Retrieve concentration profiles of plumes from measured scans
@@ -271,7 +285,28 @@ function tomoInverse(
 
                 // Calculate the concentration profile
                 //let Concentration = math.divide(Cols, Matrix);
-                let Concentration = mldivider(Cols, Matrix);
+                //let Concentration = mldivider(Cols, Matrix);
+
+                pyodide.globals.set("cols", new Float32Array(Cols.toArray().map(v=>[v])));
+                pyodide.globals.set("matrix", Matrix.toArray().map(l=>new Float32Array(l)));
+
+                // Actually run some python
+                pyodide.runPython(`
+                    import numpy as np
+                    #from scipy import optimize
+                    print("Trying to find least square solution")
+                    c = np.asarray(cols)
+                    m = np.asarray(matrix)
+                    print(c)
+                    print(m)
+                    concentration, residuals, rank, s = np.linalg.lstsq(m, c, rcond=None)
+                    #concentration = optimize.lsq_linear(m, c)
+                    print(concentration)
+                `);
+
+                // Extract the result
+                let Concentration = [...pyodide.globals.get('concentration').toJs()];
+                console.log(Concentration);
 
                 // Set negative concentrations to zero
                 Concentration = Concentration.map(v => Math.max(v, 0));
@@ -329,7 +364,12 @@ function tomoInverse(
                     }
                 });
 
-                frames.push({points: points});
+                frames.push({
+                    points: points,
+                    size1: ind1.length-1,
+                    size2: ind2.length-1,
+                    time: plumeTime
+                });
             }
         }
     }

@@ -280,7 +280,20 @@ function onDataLoaded(data, processedData) {
             ));
         }
     }
-    let dir;
+
+    // Sort frames chronologically
+    processedData.sort((a,b)=>a.time - b.time);
+
+    // Find line between instruments
+    const line = instPos[0].clone().sub(instPos[1]);
+    // Find direction away from volcano.
+    // The volcano is at the origin,
+    // so length gets the distance to it
+    let dir = line.clone().cross(new THREE.Object3D().up);
+    if ((instPos[0].lengthSq() > instPos[0].clone().add(dir).lengthSq())) {
+        dir.negate();
+    }
+
     let t = 0;
     for (const frame of processedData) {
         const concentrations = frame.points.map(d=>d.Concentration);
@@ -312,16 +325,6 @@ function onDataLoaded(data, processedData) {
             transparent: true
         });
 
-        const line = instPos[0].clone().sub(
-            instPos[1]
-        );
-        dir = line.clone().cross(new THREE.Object3D().up);
-        if ((instPos[0].lengthSq() > instPos[0].clone().add(dir).lengthSq())) {
-            // Make sure dir points away from the volcano
-            // The volcano is at the origin,
-            // so length gets the distance to it
-            dir.negate();
-        }
 
         const planeGeometry = new TomographicPlaneGeometry(ps, dir, frame.size1-1, frame.size2-1);
         const planeMesh = new THREE.Mesh(planeGeometry, material);
