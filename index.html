@@ -3,7 +3,7 @@
 	<head>
 		<title>Volcanic clouds</title>
 
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.conditional.min.css">
 
 		<style>
 			#statusContainer {
@@ -24,7 +24,7 @@
 
 	</head>
 	<body style="margin: 0">
-		<div id="fileUploadContainer" class="container-fluid" style="position: absolute;">
+		<div id="fileUploadContainer" class="pico container-fluid" style="position: absolute;">
 			<article
 			data-tooltip="Browse and select a scan or traverse data file to load"
 			data-placement="bottom">
@@ -40,10 +40,10 @@
 			<progress/ id="progress">
 		</div>
 
-		<article id="statusContainer">
-			<div role="group" style="display: flex;">
+		<article class="pico" id="statusContainer">
+			<div role="group" style="display: flex; background: #ffffff91; color: #000000c2;">
 				<button id="prevFrame">&lt;</button>
-				<div id="statusText"></div>
+				<div style="margin: 1em;" id="statusText"></div>
 				<button id="nextFrame">&gt;</button>
 			  </div>
 		</article>

@@ -10,6 +10,7 @@ import {GLTFLoader} from "./libs/threeAddons/GLTFLoader.js";
 import {GLTFExporter} from "./libs/threeAddons/GLTFExporter.js";
 import {makePlumeMesh} from "./src/makePlumeMesh.js";
 import {GUI} from "./libs/threeAddons/lil-gui.module.min.js"
+import {Api} from "./src/api.js";
 
 // GUI parameters
 let params	= {
@@ -19,6 +20,8 @@ let params	= {
     plumeVisible: true,
     pointsVisible: true,
     planeVisible: true,
+    imageScaleFactor: 1,
+    exportImage: ()=>{window.api.exportImage()}
 };
 
 let camera, scene, renderer, controls;
@@ -79,7 +82,14 @@ function init() {
                 data.push(scans);
             }
         }
+        // Hide file upload container
         document.getElementById("fileUploadContainer").style.display = "none";
+
+        // Create api and make it a global variable in the web console
+        window.api = new Api(camera, scene, renderer, controls, data, params);
+        window.THREE = THREE;
+
+        // Handle the loaded data
         onDataLoaded(data, alreadyProcessedData);
     };
 
@@ -218,10 +228,10 @@ function onDataLoaded(data, processedData) {
 
     const [nameVol, latVol, lonVol, altVol] = locateVolcano(data);
     const summitLatLng = new THREE.Vector2(latVol, lonVol);
+    window.api.volcanoName = nameVol;
+
     const radius = 6.0;
-
     const loader = new GLTFLoader().setPath("resources/terrainMeshes/");
-
     const filename = `${nameVol}.glb`;
     loader.load(filename, gltf => {
         const model = gltf.scene;
@@ -434,6 +444,10 @@ function onDataLoaded(data, processedData) {
     plumeFolder.add(params, 'assumedVelocity').onChange(()=>updateFrame());
     plumeFolder.add(params, 'maxTimeDiff').onChange(()=>updateFrame());
     plumeFolder.add(params, 'concentrationThreshold').min(0).onChange(()=>updateFrame());
+
+    const exportFolder = gui.addFolder("Export");
+    exportFolder.add(params, "imageScaleFactor").min(1);
+    exportFolder.add(params, "exportImage");
 
     // Setup keybindings
     window.addEventListener("keydown", (event) => {
