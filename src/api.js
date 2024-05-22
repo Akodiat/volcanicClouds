@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {saveString} from "./utils.js";
 
 class Api {
     /**
@@ -64,6 +65,25 @@ class Api {
             }
             this.scaleCanvas(1/scaleFactor);
         });
+    }
+
+    /**
+     * Export frames from processed data as csv files
+     * @param {*[]} processedData 
+     */
+    exportProcessedData(processedData) {
+        for (const frame of processedData) {
+            let lines = [];
+            lines.push([frame.size1, frame.size2].join(","));
+            for (const p of frame.points) {
+                lines.push([p.lonPutm, p.latPutm, p.altP, p.Concentration].join(","))
+            }
+            // TODO: This filename is not formatted the same way as the output of the Matlab script,
+            // so if you try to load the files the date parsing will fail.
+            // (but this took less time to implement)
+            const filename = `tomography_${this.volcanoName}_${frame.date1.toISOString()}_${frame.date2.toISOString()}.csv`;
+            saveString(lines.join("\n"), filename);
+        }
     }
 }
 

@@ -350,10 +350,9 @@ function tomoInverse(
                 let latPutm = PosX.map(x => latS1utm + (x / S12) * (latS2utm - latS1utm));
                 //let [lat, lon] = PosY.map((y, i) => utm2deg(latPutm[i], lonPutm[i], utmzone));
                 let altP = PosY.map(y=>altS1+y);
-                let plumeTime = new Date((
-                    data[0][indexValid[0][iValid1]].indScansTimeValid[0].getTime() + 
-                    data[1][indexValid[1][iValid2]].indScansTimeValid[0].getTime()
-                ) / 2); 
+                let date1 = data[0][indexValid[0][iValid1]].indScansTimeValid[0];
+                let date2 = data[1][indexValid[1][iValid2]].indScansTimeValid[0];
+                let plumeTime = new Date((date1.getTime(), date2.getTime()) / 2);
 
                 const points = Concentration.map((c,i)=>{
                     return {
@@ -368,6 +367,8 @@ function tomoInverse(
                     points: points,
                     size1: ind1.length-1,
                     size2: ind2.length-1,
+                    date1: date1,
+                    date2: date2,
                     time: plumeTime
                 });
             }

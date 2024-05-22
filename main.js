@@ -11,6 +11,7 @@ import {GLTFExporter} from "./libs/threeAddons/GLTFExporter.js";
 import {makePlumeMesh} from "./src/makePlumeMesh.js";
 import {GUI} from "./libs/threeAddons/lil-gui.module.min.js"
 import {Api} from "./src/api.js";
+import {saveArrayBuffer} from "./src/utils.js";
 
 // GUI parameters
 let params	= {
@@ -121,6 +122,7 @@ function init() {
  * @returns {{points: any[]}}
  */
 function parseProcessedData(text, filename) {
+    const frame = {points: []};
 
     // Parse date from filename format
     const parseDate = (d, t) => new Date(
@@ -128,15 +130,13 @@ function parseProcessedData(text, filename) {
     );
     // eslint-disable-next-line no-unused-vars
     const [_0, _1, day1, time1, _2, day2, time2] = filename.split("_");
-    const date1 = parseDate(day1, time1);
-    const date2 = parseDate(day2, time2);
-
-    const frame = {points: []};
+    frame.date1 = parseDate(day1, time1);
+    frame.date2 = parseDate(day2, time2);
 
     // Calc average time
     frame.time = new Date((
-        date1.getTime() +
-        date2.getTime()
+        frame.date1.getTime() +
+        frame.date2.getTime()
     ) / 2);
 
     // Parse points
@@ -449,6 +449,9 @@ function onDataLoaded(data, processedData) {
     exportFolder.add(params, "imageScaleFactor").min(1);
     exportFolder.add(params, "exportImage");
 
+    params.exportData = ()=>{window.api.exportProcessedData(processedData)}
+    exportFolder.add(params, "exportData");
+
     // Setup keybindings
     window.addEventListener("keydown", (event) => {
         switch (event.code) {
@@ -527,27 +530,6 @@ function generateTexture(data, height, width) {
     context.putImageData(image, 0, 0);
 
     return canvas;
-}
-
-/**
- * Saves a blob as a file
- * @param {Blob} blob
- * @param {string} filename
- */
-function save(blob, filename) {
-    const link = document.createElement("a");
-    link.style.display = "none";
-    document.body.appendChild(link);
-
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-}
-
-function saveArrayBuffer(buffer, filename) {
-    save(new Blob([buffer], {
-        type: "application/octet-stream"
-    }), filename);
 }
 
 function onWindowResize() {
