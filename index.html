@@ -28,7 +28,27 @@
 			<article
 			data-tooltip="Browse and select a scan or traverse data file to load"
 			data-placement="bottom">
-				<h1>Volcanic cloud viewer</h1>
+				<fieldset class="grid">
+					<h1>Volcanic cloud viewer</h1>
+				</fieldset>
+				<fieldset class="grid">
+					<label>
+						Completeness limit
+						<input id="completenessLimit" type="number" value=0.9 step=0.1 placeholder="0.9"/>
+					</label>
+					<label>
+						Baricenter limit
+						<input id="baricenterLimit" type="number" value=60 placeholder="60"/>
+					</label>
+					<label>
+						Time difference (minutes)
+						<input id="timeDifferenceMin" type="number" value=15 placeholder="15"/>
+					</label>
+				</fieldset>
+				<small>
+					Note that the settings above are used if you only supply evaluation log files, but will not be used if you also supply CSV concentration data.
+				</small>
+
 				<label for="fileInput">Upload data here:
 					<input type="file" id="fileInput" accept=".txt, .csv" multiple/>
 				</label>

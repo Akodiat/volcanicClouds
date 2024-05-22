@@ -26,10 +26,20 @@ document.getElementById("progress").style.display = "none";
 function tomoInverse(
     data,
     deg2utm,
-    completenessLimit = 0.9,
-    baricenterLimit = 60,
-    timeDifferenceMin = 15,
+    completenessLimit,
+    baricenterLimit,
+    timeDifferenceMin,
 ) {
+    if (completenessLimit === undefined) {
+        completenessLimit = document.getElementById("completenessLimit").valueAsNumber;
+    }
+    if (baricenterLimit === undefined) {
+        baricenterLimit = document.getElementById("baricenterLimit").valueAsNumber;
+    }
+    if (timeDifferenceMin === undefined) {
+        timeDifferenceMin = document.getElementById("timeDifferenceMin").valueAsNumber;
+    }
+
     const timeDifference = timeDifferenceMin * 60 * 1000 // To milliseconds
     const numberOffset = 5;
 
