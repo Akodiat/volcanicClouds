@@ -34,7 +34,7 @@ render();
 
 // configure the raycaster
 const raycaster = new THREE.Raycaster();
-raycaster.params.Points.threshold = 0.1;
+raycaster.params.Points.threshold = 0.001;
 
 
 
@@ -392,10 +392,7 @@ function onDataLoaded(data, processedData) {
             if (intersects.length) {
                 const index = intersects[0].index;
                 const concentration = pointMesh.geometry.attributes.concentration.array[index];
-                setStatus(pointMesh.geometry.attributes.concentration.array[index]);
                 console.log(concentration);
-            } else {
-                //setStatus(processedData[currentFrame].time.toLocaleString());
             }
         });
 
