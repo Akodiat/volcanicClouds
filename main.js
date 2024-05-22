@@ -32,6 +32,12 @@ let currentFrame;
 init();
 render();
 
+// configure the raycaster
+const raycaster = new THREE.Raycaster();
+raycaster.params.Points.threshold = 0.001;
+
+
+
 
 // Initialise scene
 function init() {
@@ -371,7 +377,24 @@ function onDataLoaded(data, processedData) {
         const ps = frame.coordinates;
 
         // Particles
-        const pointMesh = drawParticles(ps, colors, 0.005);
+        const pointMesh = drawParticles(ps, colors, [{
+            name: "concentration",
+            itemSize: 1,
+            flattenedItems: concentrations
+        }], 0.005);
+
+        window.addEventListener("mousemove", event => {
+            const mouse = new THREE.Vector2();
+            mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+            mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObject(pointMesh, false);
+            if (intersects.length) {
+                const index = intersects[0].index;
+                const concentration = pointMesh.geometry.attributes.concentration.array[index];
+                console.log(concentration);
+            }
+        });
 
         // Tomographic plane
         const texture = new THREE.CanvasTexture(
