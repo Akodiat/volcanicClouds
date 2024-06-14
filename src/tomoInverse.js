@@ -1,5 +1,5 @@
 import {locateVolcano} from "./locateVolcano.js";
-//import {mldivider} from "./mldivider.js";
+import {mldivider} from "./mldivider.js";
 import {loadPyodide} from "https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.mjs";
 
 
@@ -239,7 +239,7 @@ function tomoInverse(
                 for (let m = 0; m < ind1.length - 1; m++) {
                     Matrix.subset(
                         math.index(m, math.range(
-                            m * (ind2.length-1) + 1,
+                            m * (ind2.length-1), // + 1, this was causing differences in the matrix!,
                             m * (ind2.length-1) + ind2.length-1
                         )),
                         1
@@ -295,27 +295,27 @@ function tomoInverse(
 
                 // Calculate the concentration profile
                 //let Concentration = math.divide(Cols, Matrix);
-                //let Concentration = mldivider(Cols, Matrix);
+                let Concentration = mldivider(Cols, Matrix);
 
-                pyodide.globals.set("cols", new Float32Array(Cols.toArray().map(v=>[v])));
-                pyodide.globals.set("matrix", Matrix.toArray().map(l=>new Float32Array(l)));
+                // pyodide.globals.set("cols", new Float64Array(Cols.toArray().map(v=>[v])));
+                // pyodide.globals.set("matrix", Matrix.toArray().map(l=>new Float64Array(l)));
 
                 // Actually run some python
-                pyodide.runPython(`
-                    import numpy as np
-                    #from scipy import optimize
-                    print("Trying to find least square solution")
-                    c = np.asarray(cols)
-                    m = np.asarray(matrix)
-                    print(c)
-                    print(m)
-                    concentration, residuals, rank, s = np.linalg.lstsq(m, c, rcond=None)
-                    #concentration = optimize.lsq_linear(m, c)
-                    print(concentration)
-                `);
+                // pyodide.runPython(`
+                //     import numpy as np
+                //     #from scipy import optimize
+                //     print("Trying to find least square solution")
+                //     c = np.asarray(cols)
+                //     m = np.asarray(matrix)
+                //     print(c)
+                //     print(m)
+                //     concentration, residuals, rank, s = np.linalg.lstsq(m, c, rcond=None)
+                //     #concentration = optimize.lsq_linear(m, c)
+                //     print(concentration)
+                // `);
 
                 // Extract the result
-                let Concentration = [...pyodide.globals.get('concentration').toJs()];
+                // let Concentration = [...pyodide.globals.get('concentration').toJs()];
                 console.log(Concentration);
 
                 // Set negative concentrations to zero

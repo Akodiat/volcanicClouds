@@ -327,7 +327,7 @@ function onDataLoaded(data, processedData) {
     // using tomoInverse
     if (processedData.length === 0) {
         const deg2utm = (lat, long) => {
-            const [x,y] = proj([lat, long]);
+            const [x,y] = proj([lat, long]); // TODO this seems wrong. The deg2utm function is much bigger than just dividing by unitsPerMeter! 
             return [x/unitsPerMeter, y/unitsPerMeter];
         };
         processedData = tomoInverse(data, deg2utm);
