@@ -10,7 +10,7 @@ const pyodide = await loadPyodide();
 await pyodide.loadPackage("micropip");
 const micropip = pyodide.pyimport("micropip");
 await micropip.install("numpy");
-//await micropip.install("scipy");
+await micropip.install("scipy");
 
 // Hide progress bar
 document.getElementById("progress").style.display = "none";
@@ -236,6 +236,7 @@ function tomoInverse(
                 let Cols = math.zeros(2 * ((ind1.length - 1) + (ind2.length - 1)), 1);
 
                 // Tomographic inversion using the low-third-derivative method
+
                 for (let m = 0; m < ind1.length - 1; m++) {
                     Matrix.subset(
                         math.index(m, math.range(
@@ -295,31 +296,43 @@ function tomoInverse(
 
                 // Calculate the concentration profile
                 //let Concentration = math.divide(Cols, Matrix);
-                let Concentration = mldivider(Cols, Matrix);
+                //let Concentration = mldivider(Cols, Matrix);
 
-                // pyodide.globals.set("cols", new Float64Array(Cols.toArray().map(v=>[v])));
-                // pyodide.globals.set("matrix", Matrix.toArray().map(l=>new Float64Array(l)));
+
+                pyodide.globals.set("cols", new Float64Array(Cols.toArray().map(v=>[v])));
+                pyodide.globals.set("matrix", Matrix.toArray().map(l=>new Float64Array(l)));
+
 
                 // Actually run some python
-                // pyodide.runPython(`
-                //     import numpy as np
-                //     #from scipy import optimize
-                //     print("Trying to find least square solution")
-                //     c = np.asarray(cols)
-                //     m = np.asarray(matrix)
-                //     print(c)
-                //     print(m)
-                //     concentration, residuals, rank, s = np.linalg.lstsq(m, c, rcond=None)
-                //     #concentration = optimize.lsq_linear(m, c)
-                //     print(concentration)
-                // `);
+                pyodide.runPython(`
+                     import numpy as np
+                     from scipy import optimize
+                     print("Trying to find least square solution")
+                     c = np.asarray(cols)
+                     m = np.asarray(matrix)
+                     print(c)
+                     print(m)
+                     #concentration, residuals, rank, s = np.linalg.lstsq(m, c, rcond=None)
+                     #concentration = optimize.lsq_linear(m, c, bounds=(0, 1))
+                     concentration, rnorm = optimize.nnls(m, c)
+
+                     print(concentration)
+
+                     print("Check")
+                     check = m @ concentration
+                     print(check)
+                     print("Diff")
+                     print(c - check)
+                `);
+
+                // Try to multiply to get matrix again
 
                 // Extract the result
-                // let Concentration = [...pyodide.globals.get('concentration').toJs()];
+                let Concentration = [...pyodide.globals.get('concentration').toJs()];
                 console.log(Concentration);
 
                 // Set negative concentrations to zero
-                Concentration = Concentration.map(v => Math.max(v, 0));
+                //Concentration = Concentration.map(v => Math.max(v, 1e-5));
 
                 // Calculate the position of each concentration point in the X-Y grid
                 let meanAlpha1 = new Array(ind1.length - 1).fill(0);
