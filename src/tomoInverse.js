@@ -362,7 +362,7 @@ function tomoInverse(
                 let altP = PosY.map(y=>altS1+y);
                 let date1 = data[0][indexValid[0][iValid1]].indScansTimeValid[0];
                 let date2 = data[1][indexValid[1][iValid2]].indScansTimeValid[0];
-                let plumeTime = new Date((date1.getTime(), date2.getTime()) / 2);
+                let plumeTime = new Date((date1.getTime() + date2.getTime())/2);
 
                 const points = Concentration.map((c,i)=>{
                     return {
