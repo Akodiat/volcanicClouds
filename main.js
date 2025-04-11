@@ -78,7 +78,10 @@ function init() {
         let alreadyProcessedData = [];
         for (const file of fileInput.files) {
             const text = await file.text();
-            const [filename, suffix] = file.name.split(".");
+            // We might have multiple dots in the name
+            const splitName = file.name.split(".");
+            const suffix = splitName.pop();
+            const filename = splitName.join("");
             if (suffix === "csv") {
                 // CSV means we have data from matlab
                 const frame = parseProcessedData(text, filename);
@@ -128,7 +131,7 @@ function init() {
  * @returns {{points: any[]}}
  */
 function parseProcessedData(text, filename) {
-    const frame = {points: []};
+    const frame = {points: [], filename: filename};
 
     // Parse date from filename format
     const parseDate = (d, t) => new Date(
@@ -370,6 +373,13 @@ function onDataLoaded(data, processedData) {
         const lut = new Lut("ylOrRd", 512);
         lut.minV = Math.min(...concentrations);
         lut.maxV = Math.max(...concentrations);
+
+        // If min and max is the same, lut returns undefined
+        if (lut.minV === lut.maxV) {
+            lut.minV--;
+            lut.maxV++;
+        }
+
         const colors = concentrations.map(c=>{
             const color = lut.getColor(c);
             return color;
